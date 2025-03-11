@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YouTube Comment Analyzer - Chat</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        body {
+            background-color: #f8f9fa;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        .chat-container {
+            max-width: 1000px;
+            margin: 0 auto;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+        }
+        .header {
+            background-color: #6c5ce7;
+            color: white;
+            padding: 15px 0;
+            border-radius: 15px 15px 0 0;
+            margin-top: 20px;
+        }
+        .logo {
+            font-size: 1.8rem;
+            font-weight: bold;
+        }
+        .chat-area {
+            flex-grow: 1;
+            overflow-y: auto;
+            background-color: white;
+            border-radius: 0 0 15px 15px;
+            box-shadow: 0 6px 10px rgba(0,0,0,0.08);
+            padding: 20px;
+            margin-bottom: 20px;
+            min-height: 400px;
+            max-height: 600px;
+        }
+        .chat-footer {
+            padding: 20px;
+            background-color: white;
+            border-radius: 15px;
+            box-shadow: 0 6px 10px rgba(0,0,0,0.08);
+            margin-bottom: 20px;
+        }
+        .btn-primary {
+            background-color: #6c5ce7;
+            border-color: #6c5ce7;
+            padding: 10px 20px;
+            font-weight: 600;
+        }
+        .btn-primary:hover {
+            background-color: #5b4ecc;
+            border-color: #5b4ecc;
+        }
+        .form-control {
+            padding: 12px;
+            border-radius: 8px;
+        }
+        .message {
+            margin-bottom: 15px;
+            padding: 15px;
+            border-radius: 10px;
+        }
+        .user-message {
+            background-color: #e9ecef;
+            align-self: flex-end;
+            border-bottom-right-radius: 0;
+        }
+        .ai-message {
+            background-color: #e3e0ff;
+            border-bottom-left-radius: 0;
+        }
+        .message-header {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        .user-header {
+            color: #495057;
+        }
+        .ai-header {
+            color: #6c5ce7;
+        }
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 10px;
+        }
+        .video-info {
+            padding: 10px;
+            background-color: #f1f1f1;
+            border-radius: 8px;
+            margin-bottom: 15px;
+        }
+        .btn-back {
+            background-color: transparent;
+            border: none;
+            color: white;
+            font-size: 0.9rem;
+        }
+        .btn-back:hover {
+            color: #e3e0ff;
+        }
+    </style>
+</head>
+<body>
+    <div class="chat-container">
+        <div class="header py-3">
+            <div class="container">
+                <div class="row align-items-center">
+                    <div class="col-auto">
+                        <button id="backButton" class="btn-back">
+                            <i class="fas fa-arrow-left me-1"></i> Back
+                        </button>
+                    </div>
+                    <div class="col text-center">
+                        <div class="logo">
+                            <i class="fab fa-youtube me-2" style="color: #ff0000;"></i>Comment Analysis
+                        </div>
+                    </div>
+                    <div class="col-auto">
+                        <button id="clearButton" class="btn-back">
+                            <i class="fas fa-trash me-1"></i> Clear
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="chat-area" id="chatArea">
+            <div class="video-info">
+                <strong><i class="fab fa-youtube me-2" style="color: #ff0000;"></i>Video:</strong> 
+                <a href="{{ video_url }}" target="_blank" class="text-break">{{ video_url }}</a>
+                <div class="mt-1">
+                    <strong>Comments analyzed:</strong> {{ comment_count }}
+                </div>
+            </div>
+
+            <div class="ai-message message">
+                <div class="message-header ai-header">
+                    <i class="fas fa-robot me-2"></i>Assistant
+                </div>
+                <div class="message-content">
+                    Hello! I've analyzed {{ comment_count }} comments from the YouTube video. 
+                    You can ask me questions about these comments, such as:
+                    <ul>
+                        <li>What are the most common topics discussed?</li>
+                        <li>What's the overall sentiment of the comments?</li>
+                        <li>Are there any frequently asked questions?</li>
+                        <li>What do people like/dislike about the content?</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Chat messages will appear here -->
+        </div>
+
+        <div class="chat-footer">
+            <form id="questionForm">
+                <div class="input-group">
+                    <input type="text" class="form-control" id="question" name="question" 
+                           placeholder="Ask a question about the comments..." required>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-paper-plane me-1"></i> Send
+                    </button>
+                </div>
+            </form>
+            <div id="loading" class="loading mt-3">
+                <div class="spinner-border spinner-border-sm text-primary" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <span class="ms-2">Analyzing comments...</span>
+            </div>
+        </div>
+    </div>
+
+    <footer class="mb-3 text-center text-muted">
+        <small>&copy; 2025 YouTube Comment Analyzer</small>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.getElementById('questionForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const question = document.getElementById('question').value.trim();
+            if (!question) return;
+            
+            // Add user message to chat
+            addMessage(question, 'user');
+            
+            // Clear input
+            document.getElementById('question').value = '';
+            
+            // Show loading
+            document.getElementById('loading').style.display = 'block';
+            
+            // Send question to server
+            const formData = new FormData();
+            formData.append('question', question);
+            
+            fetch('/ask', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('loading').style.display = 'none';
+                
+                if (data.success) {
+                    addMessage(data.answer, 'ai');
+                } else {
+                    addMessage('Error: ' + data.error, 'ai', true);
+                }
+                
+                // Scroll to bottom
+                const chatArea = document.getElementById('chatArea');
+                chatArea.scrollTop = chatArea.scrollHeight;
+            })
+            .catch(error => {
+                document.getElementById('loading').style.display = 'none';
+                addMessage('An error occurred: ' + error, 'ai', true);
+                
+                // Scroll to bottom
+                const chatArea = document.getElementById('chatArea');
+                chatArea.scrollTop = chatArea.scrollHeight;
+            });
+        });
+
+        function addMessage(content, sender, isError = false) {
+            const chatArea = document.getElementById('chatArea');
+            
+            const messageDiv = document.createElement('div');
+            messageDiv.className = sender === 'user' ? 'user-message message' : 'ai-message message';
+            
+            if (isError) {
+                messageDiv.style.backgroundColor = '#ffebee';
+            }
+            
+            const headerDiv = document.createElement('div');
+            headerDiv.className = sender === 'user' ? 'message-header user-header' : 'message-header ai-header';
+            
+            const icon = document.createElement('i');
+            icon.className = sender === 'user' ? 'fas fa-user me-2' : 'fas fa-robot me-2';
+            
+            headerDiv.appendChild(icon);
+            headerDiv.appendChild(document.createTextNode(sender === 'user' ? 'You' : 'Assistant'));
+            
+            const contentDiv = document.createElement('div');
+            contentDiv.className = 'message-content';
+            contentDiv.innerHTML = content.replace(/\n/g, '<br>');
+            
+            messageDiv.appendChild(headerDiv);
+            messageDiv.appendChild(contentDiv);
+            
+            chatArea.appendChild(messageDiv);
+            
+            // Scroll to bottom
+            chatArea.scrollTop = chatArea.scrollHeight;
+        }
+
+        document.getElementById('backButton').addEventListener('click', function() {
+            window.location.href = '/';
+        });
+
+        document.getElementById('clearButton').addEventListener('click', function() {
+            if (confirm('Are you sure you want to clear this session and return to the home page?')) {
+                fetch('/clear', {
+                    method: 'POST'
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        window.location.href = '/';
+                    }
+                });
+            }
+        });
+    </script>
+</body>
+</html>
